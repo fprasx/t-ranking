@@ -3,6 +3,7 @@ use std::env;
 
 #[get("/")]
 fn index() -> String {
+	// Gets USER env variable 
 	let name = env::var("USER").unwrap_or(String::from("Couldn't find hostname"));
 	return  format!("Hello, {}", name)
 }
