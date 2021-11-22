@@ -27,10 +27,27 @@ if [[ "$?" != 0 ]]; then
 fi
 
 # Check that clippy is installed. If not, try to install
-# TODO
+clippy-driver --version &> /dev/null
+if [[ "$?" != 0 ]]; then
+	echo -e "clippy not found, attempting to install"
+	echo -e "Running \"\e[0;34mrustup component add clippy\e[0m\""
+	rustup component add clippy 
+
+	# If it couldn't install, fail
+	if [[ "$?" == 1 ]]; then exit 1; fi
+fi
+
+# Check that npm is installed
+npm --version &> /dev/null
+if [[ "$?" != 0 ]]; then
+	echo -e "\e[1;31mCan't find nodejs, please install it/add it to path\e[0m"
+	exit 1
+fi
 
 # Check that eslint is installed. If not, try to install
-# TODO
+if [[ ! -f ./node_modules/.bin/eslint ]]; then npm install; fi
+ESLINT="./node_modules/.bin/eslint"
+	
 
 # Now it starts running linters/formatters
 # In all cases, for false postiives, rather than updating the linter,
@@ -83,9 +100,14 @@ if [[ ${#FILES_FORMATTED[@]} != 0 ]]; then
 	exit 1
 fi
 
+# We can update our eslint config by running `eslint init` again
+echo -e "\e[1;34mRunning eslint\e[0m"
+for FILE in $FILES; do
+	if [[ ${FILE: -3} != ".ts" ]] && [[ ${FILE: -3} != ".js" ]]; then break; fi
+	$ESLINT $FILE
 
-#echo -e "\e[1;34mRunning eslint\e[0m"
-# TODO
+	# TODO: reject if it doesn't like it
+done
 
 # If it hasn't already failed, allow for commit
 echo -e "\e[1;34mPassed linters, proceeding to commit\e[0m"
