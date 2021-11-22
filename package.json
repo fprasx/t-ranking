@@ -1,0 +1,17 @@
+{
+  "name": "ranking",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "",
+  "license": "",
+  "scripts": {
+    "build": "",
+    "start": "",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "preinstall": "git config core.hooksPath hooks"
+  },
+  "devDependencies": {
+    "typescript": "^4.5.2"
+  }
+}

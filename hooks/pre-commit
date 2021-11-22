@@ -1,0 +1,92 @@
+#!/bin/sh
+# TODO: Make it use a typescript linter too
+echo -e "\e[1;34mRunning pre-commit hook\e[0m"
+
+FILES=$(git diff --cached --name-only --diff-filter=ACM | \
+	grep -e "\.rs$\|\.[tj]s$")
+
+# If there is nothing to check, no need to format
+if [[ $FILES == "" ]]; then exit 0; fi
+
+# Check that rustup is installed
+rustup --version &> /dev/null
+if [[ "$?" != 0 ]]; then
+	echo -e "\e[1;31mCan't find rustup, please install it/add it to path\e[0m"
+	exit 1
+fi
+
+# Check that rustfmt is installed. If not, try to install
+rustfmt --version &> /dev/null
+if [[ "$?" != 0 ]]; then
+	echo -e "rustfmt not found, attempting to install"
+	echo -e "Running \"\e[0;34mrustup component add rustfmt\e[0m\""
+	rustup component add rustfmt
+
+	# If it couldn't install, fail
+	if [[ "$?" == 1 ]]; then exit 1; fi
+fi
+
+# Check that clippy is installed. If not, try to install
+# TODO
+
+# Check that eslint is installed. If not, try to install
+# TODO
+
+# Now it starts running linters/formatters
+# In all cases, for false postiives, rather than updating the linter,
+# just disallow it for the specific line and write a comment saying that
+# it triggers a false postiive
+
+echo -e "\e[1;34mRunning clippy\e[0m"
+cargo clippy -- -A \
+	clippy::blocks-in-if-conditions \
+	-D warnings
+
+if [[ "$?" != 0 ]]; then exit 1; fi
+
+echo -e "\e[1;34mRunning rustfmt\e[0m"
+FILES_FORMATTED=()
+RUSTFMT_OPTIONS="--unstable-features --config \
+array_width=100,\
+blank_lines_upper_bound=2,\
+control_brace_style=ClosingNextLine,\
+fn_single_line=true,\
+hard_tabs=true,\
+hex_literal_case=Upper,\
+inline_attribute_width=50,\
+match_arm_blocks=false,\
+max_width=120,\
+newline_style=Unix,\
+normalize_comments=true,\
+overflow_delimited_expr=true,\
+group_imports=StdExternalCrate,\
+single_line_if_else_max_width=100,\
+struct_field_align_threshold=20,\
+trailing_comma=Always,\
+wrap_comments=true"
+
+for FILE in $FILES; do
+	if [[ ${FILE: -3} != ".rs" ]]; then break; fi
+
+	rustfmt +nightly $FILE --check $RUSTFMT_OPTIONS &> /dev/null
+
+	if [[ "$?" != 0 ]]; then 
+		rustfmt +nightly $FILE $RUSTFMT_OPTIONS
+		FILES_FORMATTED+=($FILE); 
+	fi
+
+done
+
+if [[ ${#FILES_FORMATTED[@]} != 0 ]]; then
+	echo -e "\e[1;34mThese files were formatted, please commit again\e[0m"
+	for FILE in ${FILES_FORMATTED[@]}; do echo $FILE; done
+	exit 1
+fi
+
+
+#echo -e "\e[1;34mRunning eslint\e[0m"
+# TODO
+
+# If it hasn't already failed, allow for commit
+echo -e "\e[1;34mPassed linters, proceeding to commit\e[0m"
+exit 0

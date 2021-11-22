@@ -1,4 +1,5 @@
-# JS
-/node_modules
-# Rust
+tags
+*.nix
+
 /target
+/node_modules
