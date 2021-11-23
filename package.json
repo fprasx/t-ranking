@@ -9,7 +9,7 @@
     "build": "",
     "start": "",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "preinstall": "git config core.hooksPath hooks"
+    "preinstall": "git config core.hooksPath hooks; git config pull.rebase true"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.4.0",
