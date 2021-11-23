@@ -1,8 +1,8 @@
 #!/bin/sh
-echo -e "\e[1;34mRunning pre-commit hook\e[0m"
+echo "\033[1;34mRunning pre-commit hook\033[0m"
 
 FILES=$(git diff --cached --name-only --diff-filter=ACM | \
-	grep -e "\.rs$\|\.[tj]s$")
+	grep -E "\.rs$|\.[tj]s$")
 
 # If there is nothing to check, no need to format
 if [ -z $FILES ]; then exit 0; fi
@@ -10,14 +10,14 @@ if [ -z $FILES ]; then exit 0; fi
 # Check that rustup is installed
 rustup --version > /dev/null 2>&1
 if [ "$?" -ne 0 ]; then
-	echo -e "\e[1;31mCan't find rustup, please install it/add it to path\e[0m"
+	echo  "\033[1;31mCan't find rustup, please install it/add it to path\033[0m"
 	exit 1
 fi
 
 # Check that nightly is installed (for rustfmt)
 if [ -z "$(rustup toolchain list | grep nightly)" ]; then
-	echo -e "rustup nightly not found, attempting to install"
-	echo -e "Running \"\e[0;34mrustup toolchain install nightly\e[0m\""
+	echo  "rustup nightly not found, attempting to install"
+	echo  "Running \"\033[0;34mrustup toolchain install nightly\033[0m\""
     rustup toolchain install nightly
     
 	# If it couldn't install, fail
@@ -27,8 +27,8 @@ fi
 # Check that rustfmt is installed. If not, try to install
 rustfmt --version > /dev/null 2>&1
 if [ "$?" -ne 0 ]; then
-	echo -e "rustfmt not found, attempting to install"
-	echo -e "Running \"\e[0;34mrustup component add rustfmt\e[0m\""
+	echo  "rustfmt not found, attempting to install"
+	echo  "Running \"\033[0;34mrustup component add rustfmt\033[0m\""
 	rustup component add rustfmt --toolchain nightly
 
 	if [ "$?" -ne 0 ]; then exit 1; fi
@@ -37,8 +37,8 @@ fi
 # Check that clippy is installed. If not, try to install
 clippy-driver --version > /dev/null 2>&1
 if [ "$?" -ne 0 ]; then
-	echo -e "clippy not found, attempting to install"
-	echo -e "Running \"\e[0;34mrustup component add clippy\e[0m\""
+	echo  "clippy not found, attempting to install"
+	echo  "Running \"\033[0;34mrustup component add clippy\033[0m\""
 	rustup component add clippy 
 
 	if [ "$?" -ne 0 ]; then exit 1; fi
@@ -47,14 +47,14 @@ fi
 # Check that npm is installed
 npm --version > /dev/null 2>&1
 if [ "$?" -ne 0 ]; then
-	echo -e "\e[1;31mCan't find nodejs, please install it/add it to path\e[0m"
+	echo  "\033[1;31mCan't find nodejs, please install it/add it to path\033[0m"
 	exit 1
 fi
 
 # Check that eslint is installed. If not, try to install
 if [ ! -f ./node_modules/.bin/eslint ]; then 
-	echo -e "eslint not found, attempting to install"
-	echo -e "Running \"\e[0;34mrnpm install\e[0m\""
+	echo  "eslint not found, attempting to install"
+	echo  "Running \"\033[0;34mrnpm install\033[0m\""
 	npm install
 
 	if [ "$?" -ne 0 ]; then exit 1; fi
@@ -68,14 +68,14 @@ ESLINT="./node_modules/.bin/eslint"
 # just disallow it for the specific line and write a comment saying that
 # it triggers a false postiive
 
-echo -e "\e[1;34mRunning clippy\e[0m"
+echo  "\033[1;34mRunning clippy\033[0m"
 cargo clippy -- -A \
 	clippy::blocks-in-if-conditions \
 	-D warnings
 
 if [ "$?" -ne 0 ]; then exit 1; fi
 
-echo -e "\e[1;34mRunning rustfmt\e[0m"
+echo  "\033[1;34mRunning rustfmt\033[0m"
 FILES_FORMATTED=""
 RUSTFMT_OPTIONS="--unstable-features --config \
 array_width=100,\
@@ -109,13 +109,13 @@ for FILE in $FILES; do
 done
 
 if [ ! -z $FILES_FORMATTED ]; then
-	echo -e "\e[1;34mThese files were formatted, please commit again\e[0m"
+	echo  "\033[1;34mThese files were formatted, please commit again\033[0m"
 	for FILE in $FILES_FORMATTED; do echo $FILE; done
 	exit 1
 fi
 
 # We can update our eslint config by running `eslint init` again
-echo -e "\e[1;34mRunning eslint\e[0m"
+echo  "\033[1;34mRunning eslint\033[0m"
 FILES_FORMATTED=""
 for FILE in $FILES; do
 	if [ ${FILE##*.} != "ts" ] && [ ${FILE##*.} != "js" ]; then break; fi
@@ -128,11 +128,11 @@ for FILE in $FILES; do
 done
 
 if [ ! -z $FILES_FORMATTED ]; then
-	echo -e "\e[1;34mThese files were formatted, please commit again\e[0m"
+	echo  "\033[1;34mThese files were formatted, please commit again\033[0m"
 	for FILE in $FILES_FORMATTED; do echo $FILE; done
 	exit 1
 fi
 
 # If it hasn't already failed, allow for commit
-echo -e "\e[1;34mPassed linters, proceeding to commit\e[0m"
+echo  "\033[1;34mPassed linters, proceeding to commit\033[0m"
 exit 0
