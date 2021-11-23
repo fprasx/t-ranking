@@ -93,7 +93,7 @@ overflow_delimited_expr=true,\
 group_imports=StdExternalCrate,\
 single_line_if_else_max_width=100,\
 struct_field_align_threshold=20,\
-trailing_comma=Always,\
+trailing_comma=Vertical,\
 wrap_comments=true"
 
 for FILE in $FILES; do
