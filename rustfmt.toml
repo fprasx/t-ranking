@@ -1,0 +1,2 @@
+# Added this as stopgap becaus rustfmt doesn't pick up edition in Cargo.toml and doesn't like async fn
+edition = "2021"
