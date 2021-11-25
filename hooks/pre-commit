@@ -5,28 +5,26 @@ FILES=$(git diff --cached --name-only --diff-filter=ACM | \
 	grep -E "\.rs$|\.[tj]s$")
 
 # If there is nothing to check, no need to format
-if [ -z $FILES ]; then exit 0; fi
+if [ -z "$FILES" ]; then exit 0; fi
 
 # Check that rustup is installed
-rustup --version > /dev/null 2>&1
-if [ "$?" -ne 0 ]; then
+if ! rustup --version > /dev/null 2>&1; then
 	printf "\033[1;31mCan't find rustup, please install it/add it to path\033[0m\n"
 	exit 1
 fi
 
 # Check that nightly is installed (for rustfmt)
-if [ -z "$(rustup toolchain list | grep nightly)" ]; then
+if ! rustup toolchain list | grep -q nightly; then
 	printf "rustup nightly not found, attempting to install\n"
 	printf "Running \"\033[0;34mrustup toolchain install nightly\033[0m\"\n"
 	rustup toolchain install nightly
 	
 	# If it couldn't install, fail
-	if [ "$?" -ne 9 ]; then exit 1; fi
+	if [ "$?" -ne 0 ]; then exit 1; fi
 fi
 
 # Check that rustfmt is installed. If not, try to install
-rustfmt --version > /dev/null 2>&1
-if [ "$?" -ne 0 ]; then
+if ! rustfmt --version > /dev/null 2>&1; then
 	printf "rustfmt not found, attempting to install\n"
 	printf "Running \"\033[0;34mrustup component add rustfmt\033[0m\"\n"
 	rustup component add rustfmt --toolchain nightly
@@ -35,8 +33,7 @@ if [ "$?" -ne 0 ]; then
 fi
 
 # Check that clippy is installed. If not, try to install
-clippy-driver --version > /dev/null 2>&1
-if [ "$?" -ne 0 ]; then
+if ! clippy-driver --version > /dev/null 2>&1; then
 	printf "clippy not found, attempting to install\n"
 	printf "Running \"\033[0;34mrustup component add clippy\033[0m\"\n"
 	rustup component add clippy 
@@ -45,8 +42,7 @@ if [ "$?" -ne 0 ]; then
 fi
 
 # Check that npm is installed
-npm --version > /dev/null 2>&1
-if [ "$?" -ne 0 ]; then
+if ! npm --version > /dev/null 2>&1; then
 	printf "\033[1;31mCan't find nodejs, please install it/add it to path\033[0m\n"
 	exit 1
 fi
@@ -97,20 +93,20 @@ trailing_comma=Vertical,\
 wrap_comments=true"
 
 for FILE in $FILES; do
-	if [ ${FILE##*.} != "rs" ]; then break; fi
+	if [ "${FILE##*.}" != "rs" ]; then break; fi
 
-	rustfmt +nightly $FILE --check $RUSTFMT_OPTIONS
+	rustfmt +nightly "$FILE" --check "$RUSTFMT_OPTIONS"
 
 	if [ "$?" -ne 0 ]; then 
-		rustfmt +nightly $FILE $RUSTFMT_OPTIONS > /dev/null 2>&1
+		rustfmt +nightly "$FILE" "$RUSTFMT_OPTIONS" > /dev/null 2>&1
 		FILES_FORMATTED="${FILES_FORMATTED}${FILE}\n"
 	fi
 
 done
 
-if [ ! -z $FILES_FORMATTED ]; then
+if [ -n "$FILES_FORMATTED" ]; then
 	printf "\033[1;34mThese files were formatted, please commit again\033[0m\n"
-	for FILE in $FILES_FORMATTED; do echo $FILE; done
+	for FILE in $FILES_FORMATTED; do echo "$FILE"; done
 	exit 1
 fi
 
@@ -118,18 +114,18 @@ fi
 printf "\033[1;34mRunning eslint\033[0m\n"
 FILES_FORMATTED=""
 for FILE in $FILES; do
-	if [ ${FILE##*.} != "ts" ] && [ ${FILE##*.} != "js" ]; then break; fi
-	$ESLINT $FILE
+	if [ "${FILE##*.}" != "ts" ] && [ "${FILE##*.}" != "js" ]; then break; fi
+	$ESLINT "$FILE"
 
 	if [ "$?" -ne 0 ]; then
-		$ESLINT --fix $FILE > /dev/null 2>&1
+		$ESLINT --fix "$FILE" > /dev/null 2>&1
 		FILES_FORMATTED="${FILES_FORMATTED}${FILE}\n"
 	fi
 done
 
-if [ ! -z $FILES_FORMATTED ]; then
+if [ -n "$FILES_FORMATTED" ]; then
 	printf "\033[1;34mThese files were formatted, please commit again\033[0m\n"
-	for FILE in $FILES_FORMATTED; do echo $FILE; done
+	for FILE in $FILES_FORMATTED; do echo "$FILE"; done
 	exit 1
 fi
 
