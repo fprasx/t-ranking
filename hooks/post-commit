@@ -22,4 +22,5 @@ for LINE in $BODY; do
 done
 
 printf "\033[1;34mCommit looks fine\033[0m\n"
+if [ $(git show -s --format=%an) = "fprasx" ]; then printf "You're safe for now fprasx...\n"; fi
 exit 0
