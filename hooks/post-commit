@@ -1,0 +1,25 @@
+#!/bin/sh
+printf "\033[1;34mRunning post-commit hook\033[0m\n"
+
+TITLE=$(git show -s --format=%s)
+BODY=$(git show -s --format=%b)
+
+# Rejects commit as function
+reject() 
+{
+	git reset --soft HEAD~ > /dev/null 2>&1
+	printf "\033[1;31m${1}\033[0m\n"
+	exit 1
+}
+
+# Verify title length
+if [ ${#TITLE} -gt 50 ]; then reject "Title is longer than 50 characters"; fi
+
+# Verify body line length
+for LINE in $BODY; do
+	if [ ${#LINE} -gt 72 ]; then reject "Body has line longer than 72 characters"; fi
+	break
+done
+
+printf "\033[1;34mCommit looks fine\033[0m\n"
+exit 0
