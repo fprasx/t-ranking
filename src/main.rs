@@ -10,7 +10,7 @@ use ranking::aspen::{self, AspenInfo};
 // Right now all this does is retrieve a session id from aspen for later use
 #[get("/")]
 async fn index() -> String {
-    if let Ok(info) = aspen::get_session().await {
+    if let Ok(info) = AspenInfo::new().await {
         println!("Session_id: {}", info.session_id);
         println!("Apache_token: {}", info.apache_token);
         match login(&info).await {
@@ -18,7 +18,7 @@ async fn index() -> String {
                 println!("Are we logged in? {}", !l.contains("Invalid login."));
                 // If the string is not found, then loggedin will be false, so negate it ;
             }
-            Err(e) => println!("Error logging in: {}", e),
+            Err(e) => eprintln!("Error logging in: {}", e),
         }
 
         match get_student_info(&info).await {
