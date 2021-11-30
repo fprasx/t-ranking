@@ -24,7 +24,7 @@ impl AspenInfo {
         })
     }
 
-    // Request a session id from aspen for later use
+    // Request a session id from aspen for later use [session_id, apache_token]
     async fn get_session(client: &Client) -> Result<[String; 2], ProjError> {
         let res = client
             .get("https://aspen.cpsd.us/aspen/logon.do")
