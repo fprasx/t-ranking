@@ -7,12 +7,8 @@ use ranking::aspen::get_aspen;
 #[get("/")]
 async fn index() -> String {
     match get_aspen().await {
-        Ok(res) => {
-            res
-        },
-        Err(e) => {
-            e.to_string()
-        }
+        Ok(res) => res,
+        Err(e) => e.to_string(),
     }
 }
 
