@@ -9,7 +9,7 @@ async fn index() -> String {
     match get_aspen().await {
         Ok(res) => {
             res
-        }
+        },
         Err(e) => {
             e.to_string()
         }
