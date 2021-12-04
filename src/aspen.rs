@@ -13,12 +13,11 @@ pub struct AspenInfo {
 }
 
 impl AspenInfo {
-    pub async fn new() -> Result<AspenInfo, ProjError> {
+    async fn new() -> Result<AspenInfo, ProjError> {
         let client = reqwest::Client::new();
         let [session_id, apache_token] = AspenInfo::get_session(&client).await?;
         Ok(AspenInfo {
             client,
-
             session_id,
             apache_token,
         })
@@ -43,13 +42,27 @@ impl AspenInfo {
             ret[i] = Regex::new(pattern)
                 .unwrap()
                 .captures(&res)
-                .ok_or(ProjError::from(AspenError::NoSession))?
+                .ok_or_else(|| ProjError::from(AspenError::NoSession))?
                 .get(1)
-                .ok_or(ProjError::from(AspenError::NoSession))?
+                .ok_or_else(|| ProjError::from(AspenError::NoSession))?
                 .as_str()
                 .to_owned()
         }
         Ok(ret)
+    }
+
+    // Can take ownership of self because this should be the last method called
+    async fn logout(self) -> Result<(), ProjError> {
+        let client = self.client;
+        client
+            .post("https://aspen.cpsd.us/aspen/logout.do")
+            .header(
+                header::COOKIE,
+                format!("JSESSIONID={}.aspen-app2", self.session_id),
+            )
+            .send()
+            .await?;
+        Ok(())
     }
 }
 
@@ -73,18 +86,18 @@ pub async fn get_aspen() -> Result<String, ProjError> {
     // In future, get user credentials from frontend
     let username = env::var("ASPEN_USERNAME").unwrap();
     let password = env::var("ASPEN_PASSWORD").unwrap();
-    let client = reqwest::Client::builder().build()?;
     // Getting session_id and apache_token from Aspen
     let info = AspenInfo::new().await?;
+    let client = &info.client;
     // Login to aspen
     let login_res = client
         .post("https://aspen.cpsd.us/aspen/logon.do")
         .header(
             header::COOKIE,
-            format!("JSESSIONID={}.aspen-app2", info.session_id),
+            format!("JSESSIONID={}.aspen-app2", info.session_id.clone()),
         )
         .header(header::USER_AGENT, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36")
-        .query(&[("org.apache.struts.taglib.html.TOKEN", info.apache_token)])
+        .query(&[("org.apache.struts.taglib.html.TOKEN", info.apache_token.clone())])
         .query(&[("userEvent", "930")])
         .query(&[("deploymentId", "x2sis")])
         .query(&[("username", username)])
@@ -106,5 +119,7 @@ pub async fn get_aspen() -> Result<String, ProjError> {
         .await?
         .text()
         .await?;
+    // Logout/close session
+    info.logout().await?;
     Ok(res)
 }
