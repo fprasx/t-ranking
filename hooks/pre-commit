@@ -1,5 +1,9 @@
 #!/bin/sh
-printf "\033[1;34mRunning pre-commit hook\033[0m\n"
+red="\033[1;31m"
+blue="\033[1;34m"
+reset="\033[0m"
+
+printf "${blue}Running pre-commit hook${reset}\n"
 
 FILES=$(git diff --cached --name-only --diff-filter=ACM | \
 	grep -E "\.rs$|\.[tj]s$")
@@ -9,14 +13,14 @@ if [ -z "$FILES" ]; then exit 0; fi
 
 # Check that rustup is installed
 if ! rustup --version > /dev/null 2>&1; then
-	printf "\033[1;31mCan't find rustup, please install it/add it to path\033[0m\n"
+	printf "${red}Can't find rustup, please install it/add it to path${reset}\n"
 	exit 1
 fi
 
 # Check that nightly is installed (for rustfmt)
 if ! rustup toolchain list | grep -q nightly; then
 	printf "rustup nightly not found, attempting to install\n"
-	printf "Running \"\033[0;34mrustup toolchain install nightly\033[0m\"\n"
+	printf "Running \"${blue}rustup toolchain install nightly${reset}\"\n"
 	rustup toolchain install nightly
 	
 	# If it couldn't install, fail
@@ -26,7 +30,7 @@ fi
 # Check that rustfmt is installed. If not, try to install
 if ! rustfmt --version > /dev/null 2>&1; then
 	printf "rustfmt not found, attempting to install\n"
-	printf "Running \"\033[0;34mrustup component add rustfmt\033[0m\"\n"
+	printf "Running \"${blue}rustup component add rustfmt${reset}\"\n"
 	rustup component add rustfmt --toolchain nightly
 
 	if [ "$?" -ne 0 ]; then exit 1; fi
@@ -35,7 +39,7 @@ fi
 # Check that clippy is installed. If not, try to install
 if ! clippy-driver --version > /dev/null 2>&1; then
 	printf "clippy not found, attempting to install\n"
-	printf "Running \"\033[0;34mrustup component add clippy\033[0m\"\n"
+	printf "Running \"\033[0;34mrustup component add clippy${reset}\"\n"
 	rustup component add clippy 
 
 	if [ "$?" -ne 0 ]; then exit 1; fi
@@ -43,14 +47,14 @@ fi
 
 # Check that npm is installed
 if ! npm --version > /dev/null 2>&1; then
-	printf "\033[1;31mCan't find nodejs, please install it/add it to path\033[0m\n"
+	printf "${red}Can't find nodejs, please install it/add it to path${reset}\n"
 	exit 1
 fi
 
 # Check that eslint is installed. If not, try to install
 if [ ! -f ./node_modules/.bin/eslint ]; then 
 	printf "eslint not found, attempting to install\n"
-	printf "Running \"\033[0;34mrnpm install\033[0m\"\n"
+	printf "Running \"\033[0;34mrnpm install${reset}\"\n"
 	npm install
 
 	if [ "$?" -ne 0 ]; then exit 1; fi
@@ -64,14 +68,14 @@ ESLINT="./node_modules/.bin/eslint"
 # just disallow it for the specific line and write a comment saying that
 # it triggers a false postiive
 
-printf "\033[1;34mRunning clippy\033[0m\n"
+printf "${blue}Running clippy${reset}\n"
 cargo clippy -- -A \
 	clippy::blocks-in-if-conditions \
 	-D warnings
 
 if [ "$?" -ne 0 ]; then exit 1; fi
 
-printf "\033[1;34mRunning rustfmt\033[0m\n"
+printf "${blue}Running rustfmt${reset}\n"
 FILES_FORMATTED=""
 RUSTFMT_OPTIONS="--unstable-features --config \
 array_width=100,\
@@ -105,13 +109,13 @@ for FILE in $FILES; do
 done
 
 if [ -n "$FILES_FORMATTED" ]; then
-	printf "\033[1;34mThese files were formatted, please commit again\033[0m\n"
+	printf "${blue}These files were formatted, please commit again${reset}\n"
 	for FILE in $FILES_FORMATTED; do echo "$FILE"; done
 	exit 1
 fi
 
 # We can update our eslint config by running `eslint init` again
-printf "\033[1;34mRunning eslint\033[0m\n"
+printf "${blue}Running eslint${reset}\n"
 FILES_FORMATTED=""
 for FILE in $FILES; do
 	if [ "${FILE##*.}" != "ts" ] && [ "${FILE##*.}" != "js" ]; then break; fi
@@ -124,11 +128,11 @@ for FILE in $FILES; do
 done
 
 if [ -n "$FILES_FORMATTED" ]; then
-	printf "\033[1;34mThese files were formatted, please commit again\033[0m\n"
+	printf "${blue}These files were formatted, please commit again${reset}\n"
 	for FILE in $FILES_FORMATTED; do echo "$FILE"; done
 	exit 1
 fi
 
 # If it hasn't already failed, allow for commit
-printf "\033[1;34mPassed linters, proceeding to commit\033[0m\n"
+printf "${blue}Passed linters, proceeding to commit${reset}\n"
 exit 0

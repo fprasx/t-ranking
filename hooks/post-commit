@@ -1,5 +1,9 @@
 #!/bin/sh
-printf "\033[1;34mRunning post-commit hook\033[0m\n"
+red="\033[1;31m"
+blue="\033[1;34mi"
+reset="\033[0m"
+
+printf "${blue}Running post-commit hook${reset}"
 
 TITLE=$(git show -s --format=%s)
 BODY=$(git show -s --format=%b)
@@ -8,7 +12,7 @@ BODY=$(git show -s --format=%b)
 reject() 
 {
 	git reset --soft HEAD~ > /dev/null 2>&1
-	printf "\033[1;31m%s\033[0m\n" "$1"
+	printf "${red}%s${reset}" "$1"
 	exit 1
 }
 
@@ -21,6 +25,6 @@ for LINE in $BODY; do
 	break
 done
 
-printf "\033[1;34mCommit looks fine\033[0m\n"
+printf "${blue}Commit looks fine${reset}\n"
 if [ "$(git show -s --format=%an)" = "fprasx" ]; then printf "You're safe for now fprasx...\n"; fi
 exit 0
