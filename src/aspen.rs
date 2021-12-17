@@ -5,6 +5,14 @@ use thiserror::Error;
 use reqwest::header;
 use std::env;
 
+// Holds info for one class
+#[derive(Debug)]
+pub struct Class {
+    pub teacher: String,
+    pub room: usize,
+    pub class: String,
+}
+
 #[derive(Clone, Debug)]
 pub struct AspenInfo {
     client: Client,
@@ -122,4 +130,27 @@ pub async fn get_aspen() -> Result<String, ProjError> {
     // Logout/close session
     info.logout().await?;
     Ok(res)
+}
+// Takes in response from aspen
+// Uses regex to find class info: class name, room number, and teacher
+pub fn get_classes(res: String) -> Vec::<Class> {
+    // Capture group 1: the teacher's name in the format Last, First
+    // Capture group 2: Room number
+    // Capture group 3: Class name
+    // let re = Regex::new(r"<td nowrap>\s*([A-Z]{1}[a-zA-Z-]+, [A-Z]{1}[a-zA-Z-]+)\s*</td>\s*<td nowrap>([\d]+)</td>\s*<td nowrap>\s*([a-zA-Z\s: ]+[a-zA-Z]{1})\s*</td>").unwrap();
+    let re = Regex::new(r"<td nowrap>\s*([A-Z]{1}[a-zA-Z-]+, [A-Z]{1}[a-zA-Z-]+)\s*</td>\s*<td nowrap>\s*([\d]+)\s*</td>\s*<td nowrap>\s*([a-zA-z ]+)\s*</td>").unwrap();
+    let caps = re.captures_iter(&res);
+    let mut info = Vec::<Class>::new();
+    for cap in caps {
+        info.push( 
+        Class { 
+            // Remove newlines
+            teacher: cap.get(1).unwrap().as_str().to_string().replace("\n", " "),
+            // Turn string to usize
+            room: cap.get(2).unwrap().as_str().to_string().replace("\n", " ").parse::<usize>().unwrap(),
+            // Due to the regex, there may be repeated spaces within the class name as well as new lines and tabs which should be removed
+            class: cap.get(3).unwrap().as_str().to_string().replace("\n", " ").replace("\t", " ").replace("  ", "")
+        })
+    }
+    info
 }
