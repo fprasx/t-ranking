@@ -1,12 +1,13 @@
 use regex::Regex;
+use reqwest::header;
 use reqwest::{self, Client};
+use serde::{Deserialize, Serialize};
+use serde_json;
+use std::env;
 use thiserror::Error;
 
-use reqwest::header;
-use std::env;
-
 // Holds info for one class
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Class {
     pub teacher: String,
     pub room: usize,
@@ -80,6 +81,8 @@ pub enum ProjError {
     Aspen(#[from] AspenError),
     #[error("Network error")]
     NetworkError(#[from] reqwest::Error),
+    #[error("serde_json error: {0}")]
+    JSONError(#[from] serde_json::error::Error),
 }
 
 #[derive(Error, Debug)]
@@ -131,26 +134,44 @@ pub async fn get_aspen() -> Result<String, ProjError> {
     info.logout().await?;
     Ok(res)
 }
+
 // Takes in response from aspen
 // Uses regex to find class info: class name, room number, and teacher
-pub fn get_classes(res: String) -> Vec::<Class> {
+// Returns JSON string with class list
+pub fn get_classes(aspenres: String) -> Result<String, ProjError> {
     // Capture group 1: the teacher's name in the format Last, First
     // Capture group 2: Room number
     // Capture group 3: Class name
-    // let re = Regex::new(r"<td nowrap>\s*([A-Z]{1}[a-zA-Z-]+, [A-Z]{1}[a-zA-Z-]+)\s*</td>\s*<td nowrap>([\d]+)</td>\s*<td nowrap>\s*([a-zA-Z\s: ]+[a-zA-Z]{1})\s*</td>").unwrap();
-    let re = Regex::new(r"<td nowrap>\s*([A-Z]{1}[a-zA-Z-]+, [A-Z]{1}[a-zA-Z-]+)\s*</td>\s*<td nowrap>\s*([\d]+)\s*</td>\s*<td nowrap>\s*([a-zA-z ]+)\s*</td>").unwrap();
-    let caps = re.captures_iter(&res);
+    let re = Regex::new(r"<td nowrap>\s*([A-Z]{1}[a-zA-Z-]+, [A-Z]{1}[a-zA-Z-]+)\s*</td>\s*<td nowrap>\s*([\d]+)\s*</td>\s*<td nowrap>\s*([a-zA-z: ]+)\s*</td>").unwrap();
+    let caps = re.captures_iter(&aspenres);
     let mut info = Vec::<Class>::new();
     for cap in caps {
-        info.push( 
-        Class { 
+        info.push(Class {
             // Remove newlines
             teacher: cap.get(1).unwrap().as_str().to_string().replace("\n", " "),
             // Turn string to usize
-            room: cap.get(2).unwrap().as_str().to_string().replace("\n", " ").parse::<usize>().unwrap(),
+            room: cap
+                .get(2)
+                .unwrap()
+                .as_str()
+                .to_string()
+                .replace("\n", " ")
+                .parse::<usize>()
+                .unwrap(),
             // Due to the regex, there may be repeated spaces within the class name as well as new lines and tabs which should be removed
-            class: cap.get(3).unwrap().as_str().to_string().replace("\n", " ").replace("\t", " ").replace("  ", "")
+            // TODO: figure out bettwe way to remove whitespace between output
+            class: cap
+                .get(3)
+                .unwrap()
+                .as_str()
+                .to_string()
+                .replace("\n", " ")
+                .replace("\t", " ")
+                .replace("  ", ""),
         })
     }
-    info
+    // Return class list as JSON
+    // If no classes found, will return []
+    let json = serde_json::to_string(&info)?;
+    Ok(json)
 }
