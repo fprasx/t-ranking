@@ -1,11 +1,11 @@
 #[macro_use]
 extern crate rocket;
 extern crate reqwest;
-use ranking::aspen::{get_aspen, get_classes};
+use ranking::aspen::{extract_classes, get_classes};
 
 #[get("/")]
 async fn index() -> String {
-    match get_aspen().await {
+    match get_classes().await {
         Ok(res) => res,
         Err(e) => e.to_string(),
     }
@@ -13,12 +13,8 @@ async fn index() -> String {
 
 #[get("/classes")]
 async fn classes() -> String {
-    // match get_classes(String::new()) {
-    //     Ok(res) => res,
-    //     Err(e) => e.to_string()
-    // }
-    match get_aspen().await {
-        Ok(res) => match get_classes(res) {
+    match get_classes().await {
+        Ok(res) => match extract_classes(res) {
             Ok(classes) => classes,
             Err(e) => e.to_string(),
         },
