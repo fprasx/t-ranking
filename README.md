@@ -20,6 +20,6 @@ hooks - where all git hooks would be
 
 TODOS:
 
--   [] Start vue.js frontend
--   [] Set up postgresql for storing ranking data
--   [] Fix issue in hooks/pre-commit where rustfmt does not recognize formatting options
+- [] Start vue.js frontend
+- [] Set up postgresql for storing ranking data
+- [] Fix issue in hooks/pre-commit where rustfmt does not recognize formatting options
