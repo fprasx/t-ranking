@@ -145,31 +145,31 @@ pub fn get_classes(aspenres: String) -> Result<String, ProjError> {
     let re = Regex::new(r"<td nowrap>\s*([A-Z]{1}[a-zA-Z-]+, [A-Z]{1}[a-zA-Z-]+)\s*</td>\s*<td nowrap>\s*([\d]+)\s*</td>\s*<td nowrap>\s*([a-zA-z: ]+)\s*</td>").unwrap();
     let caps = re.captures_iter(&aspenres);
     let mut info = Vec::<Class>::new();
-    for cap in caps {
-        info.push(Class {
-            // Remove newlines
-            teacher: cap.get(1).unwrap().as_str().to_string().replace("\n", " "),
-            // Turn string to usize
-            room: cap
-                .get(2)
-                .unwrap()
-                .as_str()
-                .to_string()
-                .replace("\n", " ")
-                .parse::<usize>()
-                .unwrap(),
-            // Due to the regex, there may be repeated spaces within the class name as well as new lines and tabs which should be removed
-            // TODO: figure out bettwe way to remove whitespace between output
-            class: cap
-                .get(3)
-                .unwrap()
-                .as_str()
-                .to_string()
-                .replace("\n", " ")
-                .replace("\t", " ")
-                .replace("  ", ""),
-        })
-    }
+    // Functional programming is cool
+    caps.for_each(|cap| info.push(Class {
+        // Remove newlines
+        teacher: cap.get(1).unwrap().as_str().to_string().replace("\n", " "),
+        // Turn string to usize
+        room: cap
+            .get(2)
+            .unwrap()
+            .as_str()
+            .to_string()
+            .replace("\n", " ")
+            .parse::<usize>()
+            .unwrap(),
+        // Due to the regex, there may be repeated spaces within the class name as well as new lines and tabs which should be removed
+        // TODO: figure out bettwe way to remove whitespace between words in class name
+        class: cap
+            .get(3)
+            .unwrap()
+            .as_str()
+            .to_string()
+            .replace("\n", " ")
+            .replace("\t", " ")
+            .replace("  ", ""),
+    }));
+
     // Return class list as JSON
     // If no classes found, will return []
     let json = serde_json::to_string(&info)?;
