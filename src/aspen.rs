@@ -1,4 +1,5 @@
 use regex::Regex;
+use regex::RegexBuilder;
 use reqwest::header;
 use reqwest::{self, Client};
 use serde::{Deserialize, Serialize};
@@ -167,7 +168,18 @@ pub fn extract_classes(aspenres: String) -> Result<String, ProjError> {
     // Capture group 1: the teacher's name in the format Last, First
     // Capture group 2: Room number
     // Capture group 3: Class name
-    let re = Regex::new(r"<td nowrap>\s*([A-Z]{1}[a-zA-Z-]+, [A-Z]{1}[a-zA-Z-]+)\s*</td>\s*<td nowrap>\s*([\d]+)\s*</td>\s*<td nowrap>\s*([a-zA-z: ]+)\s*</td>").unwrap();
+    // For some reason clippy doesn't like the escaped spaces
+    #[allow(clippy::invalid_regex)]
+    let re = RegexBuilder::new(
+        r"
+        <td\ nowrap>\s* ([A-Z]{1}[a-zA-Z-]+,[\ ]{1}[A-Z]{1}[a-zA-Z-]+) \s*</td>\s* # Teacher Name
+        <td\ nowrap>\s* ([\d]+)                                        \s*</td>\s* # Room Number
+        <td\ nowrap>\s* ([a-zA-z:\ ]+)                                 \s*</td>    # Class Name
+        ",
+    )
+    .ignore_whitespace(true)
+    .build()
+    .unwrap();
     let caps = re.captures_iter(&aspenres);
     let mut info = Vec::<Class>::new();
     // Functional programming is cool
@@ -191,9 +203,9 @@ pub fn extract_classes(aspenres: String) -> Result<String, ProjError> {
                 .unwrap()
                 .as_str()
                 .to_string()
-                .replace("\n", " ")
-                .replace("\t", " ")
-                .replace("  ", ""),
+                // .replace("\n", " ")
+                // .replace("\t", " ")
+                // .replace("  ", ""),
         })
     });
 
